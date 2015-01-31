@@ -1,0 +1,8 @@
+{
+    "manifest_version": 2,
+    "name": "ナントカ府",
+    "version": "1.0.0",
+    "description": "海の情報を表示します",
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://ajax.googleapis.com https://netdna.bootstrapcdn.com; object-src 'self' https://netdna.bootstrapcdn.com;",
+    "devtools_page": "view/bootstrap.html"
+}

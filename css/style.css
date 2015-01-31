@@ -1,0 +1,110 @@
+
+.girl td {
+    padding: 0 0.25em;
+}
+
+.girl .lv:before {
+    content: 'Lv';
+}
+
+.girl .name {
+    min-width: 10em;
+}
+
+.girl .life {
+    min-width: 5em;
+}
+
+.girl .bullet:before {
+    content: '弾';
+}
+
+.girl .fuel:before {
+    content: '燃';
+}
+
+.girl .bullet, .girl .fuel {
+    min-width: 5em;
+}
+
+.girl .bullet:after, .girl .fuel:after {
+    content: '%';
+}
+
+.girl .cond:before {
+    content: '[';
+}
+
+.girl .cond:after {
+    content: ']';
+}
+
+.girl .life.l0, .girl .state.l0 {
+    color: #000;
+}
+
+.girl .life.l1, .girl .state.l1 {
+    color: #000;
+}
+
+.girl .life.l2, .girl .state.l2 {
+    color: #990;
+}
+
+.girl .life.l3, .girl .state.l3 {
+    color: #f80;
+}
+
+.girl .life.l4, .girl .state.l4 {
+    color: #f00;
+}
+
+.girl .life.l5, .girl .state.l5 {
+    color: #008;
+}
+
+.girl .cond.l0 {
+    color: #990;
+}
+
+.girl .cond.l1 {
+    color: #000;
+}
+
+.girl .cond.l2 {
+    color: #000;
+}
+
+.girl .cond.l3 {
+    color: #f80;
+}
+
+.girl .cond.l4 {
+    color: #f00;
+}
+
+.girl .fuel.l0 {
+    color: #f80;
+}
+
+.girl .fuel.l1 {
+    color: #000;
+}
+
+.girl .bullet.l0 {
+    color: #f80;
+}
+
+.girl .bullet.l1 {
+    color: #000;
+}
+
+td.sight.max{background: #0f8}
+td.fire.max{background: #f68}
+td.torpedo.max{background: #adf}
+td.air.max{background: #f99}
+td.armor.max{background: #fe8}
+td.luck.max{background: #0f8}
+td.sub.max{background: #0f8}
+td.accuracy.max{background: #0f8}
+td.evasion.max{background: #0f8}
