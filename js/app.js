@@ -48,6 +48,7 @@
             db['repair'] = adaptors.repair(json).each(function (e) {
                 e.assignMaster(g);
             });
+            caches.combined = json['api_data']['api_combined_flag'] ? json['api_data']['api_combined_flag'] : 0;
             // update UI
             var $v = $('#port');
             $v.empty();
@@ -62,16 +63,13 @@
             });
             $u.empty();
             $u.append($t);
-        }).handle(/kcsapi\/api_req_(sortie|battle_midnight|practice)\/(sp_midnight|(midnight_)?battle)$/, function (json) {
-            var b = adaptors.battle(json, db['fleet']);
+        }).handle(/kcsapi\/api_req_(sortie|battle_midnight|practice|combined_battle)\/(sp_midnight|(midnight_|air)?battle(_water)?)$/, function (json) {
+            var b = adaptors.battle(json, db['fleet'],db['ship_to_hash']);
             caches.currentBattle = b;
-            if (db['ship_to_hash']) {
-                b.assignMaster(db['ship_to_hash']);
-            }
             var $v = $('#battle');
             $v.empty();
             $v.append(b.toDom());
-        }).handle(/kcsapi\/api_req_sortie\/battleresult$/, function (json) {
+        }).handle(/kcsapi\/api_req_(sortie|combined_battle)\/battleresult$/, function (json) {
             if (!caches.currentBattle) return;
             caches.od.destroyLst += caches.currentBattle.enemies.filter(function (e) {
                 return e.nowhp <= 0 && e.master != null;

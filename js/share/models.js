@@ -13,7 +13,7 @@ var models = {
     Ship: function (raw) { // ship master
         this.shipId = raw['api_id'];
         this.typeId = raw['api_stype'];
-        this.name = raw['api_name'];
+        this.name = raw['api_name']+((raw['api_yomi']=='elite'||raw['api_yomi']=='flagship')?raw['api_yomi']:'');
         this.fuel = raw['api_fuel_max'];
         this.bullet = raw['api_bull_max'];
         this.type = null;
@@ -89,27 +89,61 @@ var models = {
         this.bossCellId = raw['api_bosscell_no'] == null ? -1 : raw['api_bosscell_no'];
     },
     // 戦闘中の艦艇
-    Player: function (shipId, now, max) {
+    Player: function (shipId, idName, now, max) {
         this.nowhp = now;
         this.maxhp = max;
+        this.idName = idName;
         this.shipId = shipId;
         this.master = null;
     },
     // 戦闘そのもの
-    Battle: function (raw, fleet) {
+    Battle: function (raw, fleet, ship) {
         this.friends = this._makeFriendShips(raw, fleet); // player
         this.enemies = this._makeEnemyShips(raw); // player
+        this.combinedFlag = raw['api_nowhps_combined'] != null;
+        this.combined = this.combinedFlag ? this._makeCombinedShips(raw, fleet) : [];
+        if(ship!=null)this.assignMaster(ship);
         this.logs = [];
-        if (raw['api_kouku'] && raw['api_kouku']['api_stage3'])this._procAttack(raw['api_kouku']['api_stage3'], '航空');
-        if (raw['api_support_flag'] == 1)this._procAttack3(raw['api_support_info']['api_support_airattack']['api_kouku']['api_stage3'], '航空支援');
-        if (raw['api_support_flag'] == 2)this._procAttack3(raw['api_support_info']['api_support_airattack']['api_hourai'], '支援射撃');
-        if (raw['api_support_flag'] == 3)this._procAttack3(raw['api_support_info']['api_support_airattack']['api_hourai'], '支援雷撃');
-        if (raw['api_opening_atack'])this._procAttack(raw['api_opening_atack'], '開幕雷撃');
-        if (raw['api_hougeki1'])this._procAttack2(raw['api_hougeki1'], '砲撃');
-        if (raw['api_hougeki2'])this._procAttack2(raw['api_hougeki2'], '砲撃2');
-        if (raw['api_hougeki3'])this._procAttack2(raw['api_hougeki3'], '砲撃3');
-        if (raw['api_raigeki'])this._procAttack(raw['api_raigeki'], '雷撃');
-        if (raw['api_hougeki'])this._procAttack2(raw['api_hougeki'], '夜戦');
+        // 航空攻撃の処理
+        this._procAir(raw['api_kouku'], '航空');
+        this._procAir(raw['api_kouku2'], '航空2');
+        // 支援攻撃の処理
+        var support = raw['api_support_flag'] ? raw['api_support_flag'] : 0;
+        switch (support) {
+            case 1: // 航空支援
+                this._procAssist(raw['api_support_info']['api_support_airattack']['api_kouku']['api_stage3'], '航空支援');
+                break;
+            case 2: // 支援射撃
+                this._procAssist(raw['api_support_info']['api_support_hourai'], '支援射撃');
+                break;
+            case 3: // あかんやつ
+                this._procAssist(raw['api_support_info']['api_support_hourai'], '支援雷撃');
+                break;
+        }
+        // 開幕雷撃
+        this._procTorp(raw['api_opening_atack'], '開幕雷撃');
+        // (陣形の表示)
+        // 艦隊編成による分岐
+        switch(caches.combined){
+            case 0: // 通常艦隊
+                this._procShelling(raw['api_hougeki1'], '砲撃', false); // 主力
+                this._procShelling(raw['api_hougeki2'], '砲撃2', false); // 主力
+                break;
+            case 1: // 機動部隊
+                this._procShelling(raw['api_hougeki1'], '砲撃', true); // 随伴
+                this._procShelling(raw['api_hougeki2'], '砲撃2', false); // 主力
+                this._procShelling(raw['api_hougeki3'], '砲撃3', false); // 主力
+                break;
+            case 2: // 水上部隊
+                this._procShelling(raw['api_hougeki1'], '砲撃', false); // 主力
+                this._procShelling(raw['api_hougeki2'], '砲撃2', false); // 主力
+                this._procShelling(raw['api_hougeki3'], '砲撃3', true); // 随伴
+                break;
+        }
+        // 閉幕
+        this._procTorp(raw['api_raigeki'], '雷撃');
+        // 夜戦処理
+        this._procShelling(raw['api_hougeki'], '夜戦', caches.combined!=0); // 連合艦隊なら夜戦は随伴
     }
 };
 
@@ -145,8 +179,6 @@ models.Girl.prototype = {
         }).map(function (e) {
             return equipments[e];
         });
-        console.log(this.getName());
-        console.log(this.equipments);
         var self = this;
         this.equipments.each(function (e) {
             self.firePower.addItemScore(e.master.firePower);
@@ -308,17 +340,37 @@ models.Battle.prototype = {
         this.enemies.each(function (e) {
             e.assignMaster(ship);
         });
+        this.combined.each(function (e) {
+            e.assignMaster(ship);
+        });
     },
     _makeFriendShips: function (raw, fleet) {
         var ret = [];
-        var decknum = (raw['api_dock_id'] ? raw['api_dock_id'] : raw['api_deck_id']) - 1;
+        var deck = fleet ? fleet[(raw['api_dock_id'] ? raw['api_dock_id'] : raw['api_deck_id']) - 1] : null;
         [1, 2, 3, 4, 5, 6].each(function (i) {
             var x = raw['api_maxhps'][i];
             if (x <= 0)return;
             ret.push(
                 new models.Player(
-                    fleet ? fleet[decknum].girls[i - 1].shipId : -1,
+                    deck ? deck.girls[i - 1].shipId : -1,
+                        '味方' + i + '番艦',
                     raw['api_nowhps'][i],
+                    x)
+            );
+        });
+        return ret;
+    },
+    _makeCombinedShips: function (raw, fleet) {
+        var ret = [];
+        var deck = fleet ? fleet[1] : null;
+        [1, 2, 3, 4, 5, 6].each(function (i) {
+            var x = raw['api_maxhps_combined'][i];
+            if (x <= 0)return;
+            ret.push(
+                new models.Player(
+                    deck ? deck.girls[i - 1].shipId : -1,
+                        '随伴' + i + '番艦',
+                    raw['api_nowhps_combined'][i],
                     x)
             );
         });
@@ -332,60 +384,71 @@ models.Battle.prototype = {
             ret.push(
                 new models.Player(
                     raw['api_ship_ke'][i - 6],
+                        '敵' + (i - 6) + '番艦',
                     raw['api_nowhps'][i],
                     x)
             );
         });
         return ret;
     },
-    _dest: function (dest) {
-        return dest < 6
-            ? this.friends[dest]
-            : this.enemies[dest - 6];
+    // ダメージ可算処理をし、ログに追加する
+    _damage: function (target, val, context) {
+        target.damage(val);
+        //console.log(target.getName() + '(' + target.idName + ')に' + val + 'ダメージ(' + context + ')');
+        this.logs.push(target.getName() + '(' + target.idName + ')に' + val + 'ダメージ(' + context + ')');
     },
-    damage: function (dest, val) {
-        dest--;
-        if (dest < 0)return;
-        this._dest(dest).damage(val);
+    _procAir: function (data, context) {
+        if (!data)return;
+        this._procTorp(data['api_stage3'], context ,false);
+        this._procTorp(data['api_stage3_combined'], context ,true);
     },
-    _procAttack: function (parent, situation) { // 順序のない攻撃の処理(雷撃や航空戦)
+    _procTorp: function (data, context, combined) { // 順序のない攻撃の処理(雷撃や航空戦)
+        if (!data)return;
         var _self = this;
         [1, 2, 3, 4, 5, 6].each(function (i) {
-            var x = Math.floor(parent['api_fdam'][i]);
+            var x = Math.floor(data['api_fdam'][i]);
             if (x <= 0)return;
-            _self.damage(i, x);
-            _self._log(i, x, situation);
+            if( combined){
+                _self._damage(_self.combined[i-1], x, context);
+            } else {
+                _self._damage(_self.friends[i-1], x, context);
+            }
         });
+        if(!data['api_edam'])return;
         [1, 2, 3, 4, 5, 6].each(function (i) {
-            var x = Math.floor(parent['api_edam'][i]);
+            var x = Math.floor(data['api_edam'][i]);
             if (x <= 0)return;
-            _self.damage(i + 6, x);
-            _self._log(i + 6, x, situation);
+            _self._damage(_self.enemies[i-1], x, context);
         });
     },
-    _procAttack2: function (parent, situation) { // 順序のある攻撃の処理(通常の砲撃や夜戦)
-        var l = parent['api_df_list'].length;
+    _procShelling: function (data, context, combined) {
+        if (!data)return;
+        var _self = this;
+        var l = data['api_df_list'].length;
         for (var i = 1; i < l; i++) {
-            var s = parent['api_df_list'][i].length;
+            var s = data['api_df_list'][i].length;
             for (var j = 0; j < s; j++) {
-                var x = Math.floor(parent['api_damage'][i][j]);
+                var x = Math.floor(data['api_damage'][i][j]);
+                var dest = data['api_df_list'][i][j];
                 if (x <= 0)continue;
-                this.damage(parent['api_df_list'][i][j], x);
-                this._log(parent['api_df_list'][i][j], x, situation);
+                if (dest > 6) {
+                    _self._damage(_self.enemies[dest-7], x, context);
+                } else if (combined) {
+                    _self._damage(_self.combined[dest-1], x, context);
+                } else {
+                    _self._damage(_self.friends[dest-1], x, context);
+                }
             }
         }
     },
-    _procAttack3: function (parent, situation) { // 敵だけがダメージを受ける攻撃の処理(支援)
+    _procAssist: function (data, context) { // 敵だけがダメージを受ける攻撃の処理(支援)
+        if (!data)return;
         var _self = this;
         [1, 2, 3, 4, 5, 6].each(function (i) {
-            var x = Math.floor(parent['api_damage'][i]);
+            var x = Math.floor(data['api_damage'][i]);
             if (x <= 0)return;
-            _self.damage(i + 6, x);
-            _self._log(i + 6, x, situation);
+            _self._damage(_self.enemies[i-1], x, context);
         });
-    },
-    _log: function (i, d, s) {
-        this.logs.push((i > 6 ? ('敵' + (i - 6)) : ('味方' + i)) + '番艦に' + d + 'ダメージ(' + s + ')');
     },
     toDom: function () {
         var wrecked = false;
@@ -399,6 +462,14 @@ models.Battle.prototype = {
             if (e.isWrecked())wrecked = true;
             $ftbl.append(e.toDom());
         });
+
+        if (this.combinedFlag) {
+            var $cmbl = $('<table />').addClass('fleet');
+            this.combined.each(function (e) {
+                if (e.isWrecked())wrecked = true;
+                $cmbl.append(e.toDom());
+            });
+        }
         var $etbl = $('<table />').addClass('fleet');
         this.enemies.each(function (e) {
             $etbl.append(e.toDom());
@@ -409,6 +480,10 @@ models.Battle.prototype = {
         }
         $res.append($ftbl);
         $res.append($('<hr />'));
+        if (this.combinedFlag) {
+            $res.append($cmbl);
+            $res.append($('<hr />'));
+        }
         $res.append($etbl);
         $res.append($('<hr />'));
         $res.append($ul);
@@ -481,8 +556,8 @@ var adaptors = {
      * @param req/battle
      * @return models.Battle
      */
-    battle: function (json, fleet) {
-        return new models.Battle(json['api_data'], fleet);
+    battle: function (json, fleet, ship) {
+        return new models.Battle(json['api_data'], fleet, ship);
     },
     /**
      * @param member/port
@@ -510,6 +585,7 @@ var caches = (function () {
     var c = function () {
         this.currentSotie = null;
         this.currentBattle = null;
+        this.combined = 0;
         this.od = {
             approachBoss: 0,
             destroyLst: 0

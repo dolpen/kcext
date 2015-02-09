@@ -29,7 +29,7 @@
                 }).ifPresent(function (e) {
                     request.getContent(function (content, encoding) {
                         var json = JSON.parse(content.replace('svdata=', ''));
-                        console.log('handle url : '+url);
+                        //console.log('handle url : '+url);
                         e.exec(json);
                     });
                 });
