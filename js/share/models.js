@@ -322,6 +322,9 @@ models.Player.prototype = {
     isWrecked: function () {
         return utils.wrecked(this.nowhp, this.maxhp);
     },
+    isWreckedStart: function () {
+        return utils.wrecked(this.starthp, this.maxhp);
+    },
     damage: function (val) {
         this.nowhp = Math.max(this.nowhp - val, 0);
     },
@@ -329,7 +332,6 @@ models.Player.prototype = {
         var life = this.getLifeLevel();
         return $('<tr />').addClass('girl girl' + life)
             .append($('<td />').addClass('name').text(this.getName()))
-            .append($('<td />').addClass('life l' + life).text('' + this.starthp + ' → '))
             .append($('<td />').addClass('life l' + life).text(this.getLifeState()))
             .append($('<td />').addClass('state l' + life).text(this.getLifeLabel()));
     }
@@ -454,6 +456,7 @@ models.Battle.prototype = {
     },
     toDom: function () {
         var wrecked = false;
+        var danger = false;
         var $res = $('<div />').addClass('result');
         var $ul = $('<ul />').addClass('battle');
         this.logs.each(function (e) {
@@ -462,6 +465,7 @@ models.Battle.prototype = {
         var $ftbl = $('<table />').addClass('fleet');
         this.friends.each(function (e) {
             if (e.isWrecked())wrecked = true;
+            if (e.isWreckedStart())danger = true;
             $ftbl.append(e.toDom());
         });
 
@@ -469,6 +473,7 @@ models.Battle.prototype = {
             var $cmbl = $('<table />').addClass('fleet');
             this.combined.each(function (e) {
                 if (e.isWrecked())wrecked = true;
+                if (e.isWreckedStart())danger = true;
                 $cmbl.append(e.toDom());
             });
         }
@@ -477,7 +482,11 @@ models.Battle.prototype = {
             $etbl.append(e.toDom());
         });
         if (wrecked) {
-            $res.append($('<p />').css('color', 'red').text('大破艦が出ました！'));
+            if(danger){
+                $res.append($('<p />').css('color', 'red').text('大破状態で戦闘に突入しました！！'));
+            } else {
+                $res.append($('<p />').css('color', 'red').text('大破艦が出ました！'));
+            }
             $res.append($('<hr />'));
         }
         $res.append($ftbl);
