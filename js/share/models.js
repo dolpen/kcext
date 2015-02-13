@@ -13,7 +13,7 @@ var models = {
     Ship: function (raw) { // ship master
         this.shipId = raw['api_id'];
         this.typeId = raw['api_stype'];
-        this.name = raw['api_name']+((raw['api_yomi']=='elite'||raw['api_yomi']=='flagship')?raw['api_yomi']:'');
+        this.name = raw['api_name'] + ((raw['api_yomi'] == 'elite' || raw['api_yomi'] == 'flagship') ? raw['api_yomi'] : '');
         this.fuel = raw['api_fuel_max'];
         this.bullet = raw['api_bull_max'];
         this.type = null;
@@ -90,6 +90,7 @@ var models = {
     },
     // 戦闘中の艦艇
     Player: function (shipId, idName, now, max) {
+        this.starthp = now;
         this.nowhp = now;
         this.maxhp = max;
         this.idName = idName;
@@ -102,7 +103,7 @@ var models = {
         this.enemies = this._makeEnemyShips(raw); // player
         this.combinedFlag = raw['api_nowhps_combined'] != null;
         this.combined = this.combinedFlag ? this._makeCombinedShips(raw, fleet) : [];
-        if(ship!=null)this.assignMaster(ship);
+        if (ship != null)this.assignMaster(ship);
         this.logs = [];
         // 航空攻撃の処理
         this._procAir(raw['api_kouku'], '航空');
@@ -124,7 +125,7 @@ var models = {
         this._procTorp(raw['api_opening_atack'], '開幕雷撃');
         // (陣形の表示)
         // 艦隊編成による分岐
-        switch(caches.combined){
+        switch (caches.combined) {
             case 0: // 通常艦隊
                 this._procShelling(raw['api_hougeki1'], '砲撃', false); // 主力
                 this._procShelling(raw['api_hougeki2'], '砲撃2', false); // 主力
@@ -143,7 +144,7 @@ var models = {
         // 閉幕
         this._procTorp(raw['api_raigeki'], '雷撃');
         // 夜戦処理
-        this._procShelling(raw['api_hougeki'], '夜戦', caches.combined!=0); // 連合艦隊なら夜戦は随伴
+        this._procShelling(raw['api_hougeki'], '夜戦', caches.combined != 0); // 連合艦隊なら夜戦は随伴
     }
 };
 
@@ -328,6 +329,7 @@ models.Player.prototype = {
         var life = this.getLifeLevel();
         return $('<tr />').addClass('girl girl' + life)
             .append($('<td />').addClass('name').text(this.getName()))
+            .append($('<td />').addClass('life l' + life).text('' + this.starthp + ' → '))
             .append($('<td />').addClass('life l' + life).text(this.getLifeState()))
             .append($('<td />').addClass('state l' + life).text(this.getLifeLabel()));
     }
@@ -399,8 +401,8 @@ models.Battle.prototype = {
     },
     _procAir: function (data, context) {
         if (!data)return;
-        this._procTorp(data['api_stage3'], context ,false);
-        this._procTorp(data['api_stage3_combined'], context ,true);
+        this._procTorp(data['api_stage3'], context, false);
+        this._procTorp(data['api_stage3_combined'], context, true);
     },
     _procTorp: function (data, context, combined) { // 順序のない攻撃の処理(雷撃や航空戦)
         if (!data)return;
@@ -408,17 +410,17 @@ models.Battle.prototype = {
         [1, 2, 3, 4, 5, 6].each(function (i) {
             var x = Math.floor(data['api_fdam'][i]);
             if (x <= 0)return;
-            if( combined){
-                _self._damage(_self.combined[i-1], x, context);
+            if (combined) {
+                _self._damage(_self.combined[i - 1], x, context);
             } else {
-                _self._damage(_self.friends[i-1], x, context);
+                _self._damage(_self.friends[i - 1], x, context);
             }
         });
-        if(!data['api_edam'])return;
+        if (!data['api_edam'])return;
         [1, 2, 3, 4, 5, 6].each(function (i) {
             var x = Math.floor(data['api_edam'][i]);
             if (x <= 0)return;
-            _self._damage(_self.enemies[i-1], x, context);
+            _self._damage(_self.enemies[i - 1], x, context);
         });
     },
     _procShelling: function (data, context, combined) {
@@ -432,11 +434,11 @@ models.Battle.prototype = {
                 var dest = data['api_df_list'][i][j];
                 if (x <= 0)continue;
                 if (dest > 6) {
-                    _self._damage(_self.enemies[dest-7], x, context);
+                    _self._damage(_self.enemies[dest - 7], x, context);
                 } else if (combined) {
-                    _self._damage(_self.combined[dest-1], x, context);
+                    _self._damage(_self.combined[dest - 1], x, context);
                 } else {
-                    _self._damage(_self.friends[dest-1], x, context);
+                    _self._damage(_self.friends[dest - 1], x, context);
                 }
             }
         }
@@ -447,7 +449,7 @@ models.Battle.prototype = {
         [1, 2, 3, 4, 5, 6].each(function (i) {
             var x = Math.floor(data['api_damage'][i]);
             if (x <= 0)return;
-            _self._damage(_self.enemies[i-1], x, context);
+            _self._damage(_self.enemies[i - 1], x, context);
         });
     },
     toDom: function () {
