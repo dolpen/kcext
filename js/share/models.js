@@ -249,7 +249,11 @@ models.Girl.prototype = {
             .append($('<td />').addClass('fuel l' + this.getFuelLevel()).text(this.getFuelState()))
             .append($('<td />').addClass('bullet l' + this.getBulletLevel()).text(this.getBulletState()))
             .append($('<td />').addClass('cond l' + this.getConditionLevel()).text(this.condition))
-            .append($('<td />').addClass('state l' + life).text(this.getLifeLabel()));
+            .append($('<td />').addClass('state l' + life).text(this.getLifeLabel()))
+            .append($('<td />').addClass('equip').text(!this.equipments[0] ? '' : this.equipments[0].getName()))
+            .append($('<td />').addClass('equip').text(!this.equipments[1] ? '' : this.equipments[1].getName()))
+            .append($('<td />').addClass('equip').text(!this.equipments[2] ? '' : this.equipments[2].getName()))
+            .append($('<td />').addClass('equip').text(!this.equipments[3] ? '' : this.equipments[3].getName()));
     },
     statusToDom: function () {
         return $('<tr />').addClass('girl')
@@ -259,16 +263,19 @@ models.Girl.prototype = {
             .append($('<td />').addClass('torpedo ' + (this.torpedo.isFinished() ? 'max' : '')).text(this.torpedo.toString()))
             .append($('<td />').addClass('air ' + (this.antiAir.isFinished() ? 'max' : '')).text(this.antiAir.toString()))
             .append($('<td />').addClass('armor ' + (this.armor.isFinished() ? 'max' : '')).text(this.armor.toString()))
-            .append($('<td />').text(this.equipments[0] != null ? this.equipments[0].master.name : ''))
-            .append($('<td />').text(this.equipments[1] != null ? this.equipments[1].master.name : ''))
-            .append($('<td />').text(this.equipments[2] != null ? this.equipments[2].master.name : ''))
-            .append($('<td />').text(this.equipments[3] != null ? this.equipments[3].master.name : ''));
+            .append($('<td />').addClass('equip').text(!this.equipments[0] ? '' : this.equipments[0].getName()))
+            .append($('<td />').addClass('equip').text(!this.equipments[1] ? '' : this.equipments[1].getName()))
+            .append($('<td />').addClass('equip').text(!this.equipments[2] ? '' : this.equipments[2].getName()))
+            .append($('<td />').addClass('equip').text(!this.equipments[3] ? '' : this.equipments[3].getName()));
     }
 };
 
 models.Equipment.prototype = {
     assignMaster: function (weapon) {
         this.master = weapon[this.weaponId];
+    },
+    getName: function () {
+        return utils.displayName(this.master) + (this.level > 0 ? ('★+' + this.level) : '');
     }
 };
 models.Fleet.prototype = {

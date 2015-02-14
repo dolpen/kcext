@@ -38,10 +38,10 @@ var utils = {
     },
     /**
      *
-     * @param shipMaster
+     * @param master
      * @returns {string}
      */
-    displayName: function (shipMaster) {
-        return shipMaster ? shipMaster.name : '(不明)';
+    displayName: function (master) {
+        return master&&master.name ? master.name : '(不明)';
     }
 };

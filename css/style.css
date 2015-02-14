@@ -1,6 +1,12 @@
 
-.girl td {
+.girl td,
+.fleet td {
     padding: 0 0.25em;
+    font-size: small;
+}
+
+.girl .equip {
+    font-size: x-small;
 }
 
 .girl .lv:before {
@@ -99,15 +105,45 @@
     color: #000;
 }
 
-td.sight.max{background: #0f8}
-td.fire.max{background: #f68}
-td.torpedo.max{background: #adf}
-td.air.max{background: #f99}
-td.armor.max{background: #fe8}
-td.luck.max{background: #0f8}
-td.sub.max{background: #0f8}
-td.accuracy.max{background: #0f8}
-td.evasion.max{background: #0f8}
+td.sight.max {
+    background: #0f8
+}
+
+td.fire.max {
+    background: #f68
+}
+
+td.torpedo.max {
+    background: #adf
+}
+
+td.air.max {
+    background: #f99
+}
+
+td.armor.max {
+    background: #fe8
+}
+
+td.luck.max {
+    background: #0f8
+}
+
+td.sub.max {
+    background: #0f8
+}
+
+td.accuracy.max {
+    background: #0f8
+}
+
+td.evasion.max {
+    background: #0f8
+}
+
+.battle .log {
+    font-size: small;
+}
 
 /**
  modal context
@@ -116,6 +152,7 @@ td.evasion.max{background: #0f8}
     border-radius: 6px;
     background-color: #f2dede;
 }
+
 .modal-danger .modal-header,
 .modal-danger .modal-body,
 .modal-danger .modal-footer {

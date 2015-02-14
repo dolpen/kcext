@@ -57,7 +57,6 @@
             db['fleet'].each(function (e) {
                 $v.append(e.toDom());
             });
-
             var $u = $('#girl');
             var $t = $('<table />');
             db['girl'].each(function (e) {
@@ -87,5 +86,4 @@
                 $('#wreckedModal').modal('show');
             }
         }).listen();
-    $('#wreckedModal').modal('show');
 })(document, window, jQuery);
