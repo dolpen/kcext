@@ -103,6 +103,8 @@ var models = {
         this.enemies = this._makeEnemyShips(raw); // player
         this.combinedFlag = raw['api_nowhps_combined'] != null;
         this.combined = this.combinedFlag ? this._makeCombinedShips(raw, fleet) : [];
+        this.wrecked = false;
+        this.wreckedStart = false;
         if (ship != null)this.assignMaster(ship);
         this.logs = [];
         // 航空攻撃の処理
@@ -145,6 +147,17 @@ var models = {
         this._procTorp(raw['api_raigeki'], '雷撃');
         // 夜戦処理
         this._procShelling(raw['api_hougeki'], '夜戦', caches.combined != 0); // 連合艦隊なら夜戦は随伴
+        // ダメージ集計処理（大破艦発生判定）
+        this.friends.each(function (e) {
+            if (e.isWrecked())this.wrecked = true;
+            if (e.isWreckedStart())this.wreckedStart = true;
+        });
+        if (this.combinedFlag) {
+            this.combined.each(function (e) {
+                if (e.isWrecked())this.wrecked = true;
+                if (e.isWreckedStart())this.wreckedStart = true;
+            });
+        }
     }
 };
 
@@ -454,9 +467,13 @@ models.Battle.prototype = {
             _self._damage(_self.enemies[i - 1], x, context);
         });
     },
+    isWrecked: function () {
+        return this.wrecked;
+    },
+    isWreckedStart: function () {
+        return this.wreckedStart;
+    },
     toDom: function () {
-        var wrecked = false;
-        var danger = false;
         var $res = $('<div />').addClass('result');
         var $ul = $('<ul />').addClass('battle');
         this.logs.each(function (e) {
@@ -464,16 +481,12 @@ models.Battle.prototype = {
         });
         var $ftbl = $('<table />').addClass('fleet');
         this.friends.each(function (e) {
-            if (e.isWrecked())wrecked = true;
-            if (e.isWreckedStart())danger = true;
             $ftbl.append(e.toDom());
         });
 
         if (this.combinedFlag) {
             var $cmbl = $('<table />').addClass('fleet');
             this.combined.each(function (e) {
-                if (e.isWrecked())wrecked = true;
-                if (e.isWreckedStart())danger = true;
                 $cmbl.append(e.toDom());
             });
         }
@@ -481,8 +494,8 @@ models.Battle.prototype = {
         this.enemies.each(function (e) {
             $etbl.append(e.toDom());
         });
-        if (wrecked) {
-            if(danger){
+        if (this.isWrecked()) {
+            if(this.isWreckedStart()){
                 $res.append($('<p />').css('color', 'red').text('大破状態で戦闘に突入しました！！'));
             } else {
                 $res.append($('<p />').css('color', 'red').text('大破艦が出ました！'));
