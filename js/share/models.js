@@ -333,7 +333,7 @@ models.Docks.prototype = {
     toDom: function () {
         var $ret = $('<table />').addClass('docks').append(
             $('<tr />').addClass('info').append(
-                $('<td />').text(this.name)
+                $('<td />').text('■')
             ).append(
                 $('<td />').text(this.name)
             )
