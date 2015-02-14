@@ -68,6 +68,9 @@ var models = {
         this.level = raw['api_level'];
         this.weapon = null;
     },
+    Port: function (fleets) {
+        this.fleets = fleets;
+    },
     Fleet: function (raw) {
         this.fleetId = raw['api_id'];
         this.name = raw['api_name'];
@@ -76,6 +79,10 @@ var models = {
             return e > 0;
         });
         this.girls = null;
+    },
+    Docks: function (name, docks) {
+        this.name = name;
+        this.docks = docks;
     },
     Repair: function (raw) {
         this.dockId = raw['api_id'];
@@ -250,10 +257,10 @@ models.Girl.prototype = {
             .append($('<td />').addClass('bullet l' + this.getBulletLevel()).text(this.getBulletState()))
             .append($('<td />').addClass('cond l' + this.getConditionLevel()).text(this.condition))
             .append($('<td />').addClass('state l' + life).text(this.getLifeLabel()))
-            .append($('<td />').addClass('equip').text(!this.equipments[0] ? '' : this.equipments[0].getName()))
-            .append($('<td />').addClass('equip').text(!this.equipments[1] ? '' : this.equipments[1].getName()))
-            .append($('<td />').addClass('equip').text(!this.equipments[2] ? '' : this.equipments[2].getName()))
-            .append($('<td />').addClass('equip').text(!this.equipments[3] ? '' : this.equipments[3].getName()));
+            .append($('<td />').addClass('equip').text(this.equipments && this.equipments[0] ? this.equipments[0].getName() : ''))
+            .append($('<td />').addClass('equip').text(this.equipments && this.equipments[1] ? this.equipments[1].getName() : ''))
+            .append($('<td />').addClass('equip').text(this.equipments && this.equipments[2] ? this.equipments[2].getName() : ''))
+            .append($('<td />').addClass('equip').text(this.equipments && this.equipments[3] ? this.equipments[3].getName() : ''));
     },
     statusToDom: function () {
         return $('<tr />').addClass('girl')
@@ -263,10 +270,10 @@ models.Girl.prototype = {
             .append($('<td />').addClass('torpedo ' + (this.torpedo.isFinished() ? 'max' : '')).text(this.torpedo.toString()))
             .append($('<td />').addClass('air ' + (this.antiAir.isFinished() ? 'max' : '')).text(this.antiAir.toString()))
             .append($('<td />').addClass('armor ' + (this.armor.isFinished() ? 'max' : '')).text(this.armor.toString()))
-            .append($('<td />').addClass('equip').text(!this.equipments[0] ? '' : this.equipments[0].getName()))
-            .append($('<td />').addClass('equip').text(!this.equipments[1] ? '' : this.equipments[1].getName()))
-            .append($('<td />').addClass('equip').text(!this.equipments[2] ? '' : this.equipments[2].getName()))
-            .append($('<td />').addClass('equip').text(!this.equipments[3] ? '' : this.equipments[3].getName()));
+            .append($('<td />').addClass('equip').text(this.equipments && this.equipments[0] ? this.equipments[0].getName() : ''))
+            .append($('<td />').addClass('equip').text(this.equipments && this.equipments[1] ? this.equipments[1].getName() : ''))
+            .append($('<td />').addClass('equip').text(this.equipments && this.equipments[2] ? this.equipments[2].getName() : ''))
+            .append($('<td />').addClass('equip').text(this.equipments && this.equipments[3] ? this.equipments[3].getName() : ''));
     }
 };
 
@@ -278,6 +285,28 @@ models.Equipment.prototype = {
         return utils.displayName(this.master) + (this.level > 0 ? ('★+' + this.level) : '');
     }
 };
+models.Port.prototype = {
+    assignMaster: function (girl) {
+        this.fleets.each(function (e) {
+            e.assignMaster(girl);
+        });
+    },
+    toDom: function () {
+        var $ret = $('<table />').addClass('fleet');
+        this.fleets.each(function (e) {
+            $ret.append($('<tr />').addClass('info').append(
+                $('<td />').addClass('fid').text('' + e.fleetId)
+            ).append(
+                $('<td />').attr('colspan', '6').addClass('name').text(e.name + ' ' + e.getState())
+            ));
+            e.girls.each(function (e) {
+                $ret.append(e.toDom());
+            });
+        });
+        return $ret;
+    }
+};
+
 models.Fleet.prototype = {
     assignMaster: function (girl) {
         this.girls = this.girlIds.map(function (e) {
@@ -287,19 +316,30 @@ models.Fleet.prototype = {
     isFinished: function () {
         return this.until > 0 && new Date().getTime() >= this.until;
     },
+    getState: function () {
+        return this.until > 0 ? ('遠征中 : ～' + utils.formatDate(new Date(this.until))) : '';
+    },
     reset: function () {
         this.until = 0;
+    }
+};
+
+models.Docks.prototype = {
+    assignMaster: function (girl) {
+        this.docks.each(function (e) {
+            e.assignMaster(girl);
+        });
     },
     toDom: function () {
-        var $ret = $('<table />').addClass('fleet').append(
+        var $ret = $('<table />').addClass('docks').append(
             $('<tr />').addClass('info').append(
-                $('<td />').addClass('fid').text('' + this.fleetId)
+                $('<td />').text(this.name)
             ).append(
-                $('<td />').attr('colspan', '6').addClass('name').text(this.name)
+                $('<td />').text(this.name)
             )
         );
-        this.girls.each(function (e) {
-            $ret.append(e.toDom());
+        this.docks.eachWithIndex(function (i, e) {
+            $ret.append(e.toDom(i));
         });
         return $ret;
     }
@@ -311,11 +351,26 @@ models.Repair.prototype = {
     getName: function () {
         return (this.girl != null ? this.girl.getName() : '(なし)');
     },
+    getState: function () {
+        if (this.until <= 0) {
+            return '空き';
+        } else if (this.isFinished()) {
+            return '回収待ち';
+        }
+        return this.getName() + 'が修理中 : ～' + utils.formatDate(new Date(this.until));
+    },
     isFinished: function () {
         return this.until > 0 && new Date().getTime() >= this.until;
     },
     reset: function () {
         this.until = 0;
+    },
+    toDom: function (i) {
+        return $('<tr />').addClass('dock').append(
+            $('<td />').text('' + i)
+        ).append(
+            $('<td />').text(this.getState())
+        );
     }
 };
 models.Sotie.prototype = {
@@ -592,23 +647,23 @@ var adaptors = {
     },
     /**
      * @param member/port
-     * @return List{models.Fleet}
+     * @return Port{models.Fleet}
      */
     fleet: function (json) {
         var p = json['api_data']['api_deck_port'];
-        return p.map(function (x) {
+        return new models.Port(p.map(function (x) {
             return new models.Fleet(x);
-        });
+        }));
     },
     /**
      * @param member/port
-     * @return List{models.Repair}
+     * @return models.Docks[models.Repair]}
      */
     repair: function (json) {
         var p = json['api_data']['api_ndock'];
-        return p.map(function (x) {
+        return new models.Docks('修理ドック', p.map(function (x) {
             return new models.Repair(x);
-        });
+        }));
     }
 };
 

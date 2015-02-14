@@ -34,6 +34,11 @@ Array.prototype.each = function (f) {
     for (var i = 0; i < l; i++) f(this[i]);
     return this;
 };
+Array.prototype.eachWithIndex = function (f) {
+    var l = this.length;
+    for (var i = 0; i < l; i++) f(i,this[i]);
+    return this;
+};
 Array.prototype.any = function (f) {
     var l = this.length;
     for (var i = 0; i < l; i++) if(f(this[i])) return true;

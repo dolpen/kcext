@@ -42,21 +42,19 @@
             var g = db['girl'].tohash(function (e) {
                 return e.girlId;
             });
-            db['fleet'] = adaptors.fleet(json).each(function (e) {
-                e.assignMaster(g);
-            });
-            db['repair'] = adaptors.repair(json).each(function (e) {
-                e.assignMaster(g);
-            });
+            db['port'] = adaptors.fleet(json);
+            db['port'].assignMaster(g);
+            db['repair'] = adaptors.repair(json);
+            db['repair'].assignMaster(g);
             // update global object
             caches.onBackPort(json);
 
             // update UI
             var $v = $('#port');
             $v.empty();
-            db['fleet'].each(function (e) {
-                $v.append(e.toDom());
-            });
+            $v.append(db['port'].toDom());
+            $v.append(db['repair'].toDom());
+
             var $u = $('#girl');
             var $t = $('<table />');
             db['girl'].each(function (e) {
