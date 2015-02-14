@@ -84,7 +84,7 @@ var models = {
         this.girlId = raw['api_ship_id'];
         this.girl = null;
     },
-    Sortie: function (raw) {
+    Sotie: function (raw) {
         this.cellId = raw['api_no'];
         this.bossCellId = raw['api_bosscell_no'] == null ? -1 : raw['api_bosscell_no'];
     },
@@ -311,7 +311,7 @@ models.Repair.prototype = {
         this.until = 0;
     }
 };
-models.Sortie.prototype = {
+models.Sotie.prototype = {
     isBossCell: function () {
         return this.cellId == this.bossCellId;
     }
@@ -495,7 +495,7 @@ models.Battle.prototype = {
             $etbl.append(e.toDom());
         });
         if (this.isWrecked()) {
-            if(this.isWreckedStart()){
+            if (this.isWreckedStart()) {
                 $res.append($('<p />').css('color', 'red').text('大破状態で戦闘に突入しました！！'));
             } else {
                 $res.append($('<p />').css('color', 'red').text('大破艦が出ました！'));
@@ -571,10 +571,10 @@ var adaptors = {
     },
     /**
      * @param req/start
-     * @return models.Sortie
+     * @return models.Sotie
      */
     sortie: function (json) {
-        return new models.Sortie(json['api_data']);
+        return new models.Sotie(json['api_data']);
     },
     /**
      * @param req/battle
@@ -605,9 +605,10 @@ var adaptors = {
     }
 };
 
+// APIを跨いで計算されたり保持されたりするもの
 var caches = (function () {
     var c = function () {
-        this.currentSotie = null;
+        this.isWrecked = false;
         this.currentBattle = null;
         this.combined = 0;
         this.od = {
@@ -616,6 +617,18 @@ var caches = (function () {
         };
     };
     c.prototype = {
+        // 出撃中大破時
+        onWrecked: function () {
+            this.wrecked = true;
+        },
+        // 進撃時安全チェック
+        isSafeSotie: function () {
+            return !this.isWrecked;
+        },
+        // 母港帰還時
+        onBackPort: function () {
+            this.wrecked = false; // ただし修理は必要
+        },
         toDom: function () {
             var $ul = $('<ul />').addClass('counts');
             $ul.append($('<li />').addClass('cnt').text('ボス到達 :' + this.od.approachBoss));
