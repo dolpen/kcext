@@ -1,4 +1,5 @@
-var models = {
+var models;
+models = {
     sub: {
         AbilityScore: function (nowmax) {
             this.current = nowmax[0]; // Lv100より上だとmaxより大きくなる
@@ -155,15 +156,16 @@ var models = {
         this._procTorp(raw['api_raigeki'], '雷撃');
         // 夜戦処理
         this._procShelling(raw['api_hougeki'], '夜戦', caches.combined != 0); // 連合艦隊なら夜戦は随伴
+        var self = this;
         // ダメージ集計処理（大破艦発生判定）
         this.friends.each(function (e) {
-            if (e.isWrecked())this.wrecked = true;
-            if (e.isWreckedStart())this.wreckedStart = true;
+            if (e.isWrecked())self.wrecked = true;
+            if (e.isWreckedStart())self.wreckedStart = true;
         });
         if (this.combinedFlag) {
             this.combined.each(function (e) {
-                if (e.isWrecked())this.wrecked = true;
-                if (e.isWreckedStart())this.wreckedStart = true;
+                if (e.isWrecked())self.wrecked = true;
+                if (e.isWreckedStart())self.wreckedStart = true;
             });
         }
     }
