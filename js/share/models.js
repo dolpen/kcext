@@ -105,7 +105,8 @@ var models = {
         this.master = null;
     },
     // 戦闘そのもの
-    Battle: function (raw, fleet, ship) {
+    Battle: function (raw, port, ship) {
+        var fleet = port.fleets;
         this.friends = this._makeFriendShips(raw, fleet); // player
         this.enemies = this._makeEnemyShips(raw); // player
         this.combinedFlag = raw['api_nowhps_combined'] != null;
@@ -642,8 +643,8 @@ var adaptors = {
      * @param req/battle
      * @return models.Battle
      */
-    battle: function (json, fleet, ship) {
-        return new models.Battle(json['api_data'], fleet, ship);
+    battle: function (json, port, ship) {
+        return new models.Battle(json['api_data'], port, ship);
     },
     /**
      * @param member/port

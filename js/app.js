@@ -63,7 +63,7 @@
             $u.empty();
             $u.append($t);
         }).handle(/kcsapi\/api_req_(sortie|battle_midnight|practice|combined_battle)\/(sp_midnight|(midnight_|air)?battle(_water)?)$/, function (json) {
-            var b = adaptors.battle(json, db['fleet'], db['ship_to_hash']);
+            var b = adaptors.battle(json, db['port'], db['ship_to_hash']);
             // update global object
             caches.onBattle(b);
             var $v = $('#battle');
