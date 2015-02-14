@@ -573,7 +573,7 @@ var adaptors = {
      * @param req/start
      * @return models.Sotie
      */
-    sortie: function (json) {
+    sotie: function (json) {
         return new models.Sotie(json['api_data']);
     },
     /**
@@ -617,17 +617,34 @@ var caches = (function () {
         };
     };
     c.prototype = {
-        // 出撃中大破時
-        onWrecked: function () {
-            this.wrecked = true;
+        // 戦闘時
+        onBattle: function (battle) {
+            this.currentBattle = battle;
+            this.wrecked = battle.isWrecked();
+        },
+        // 戦闘終了時(主に沈めた輸送艦のコミット)
+        onFinishBattle: function () {
+            if (!this.currentBattle)return;
+            this.od.destroyLst += this.currentBattle.enemies.filter(function (e) {
+                return e.nowhp <= 0 && e.master != null;
+            }).filter(function (e) {
+                return e.master.typeId == 15; // 15 = 補給艦
+            }).length;
+        },
+        // 進撃時安全チェック
+        onSotie: function (sotie) {
+            if (sotie.isBossCell()) {
+                this.od.approachBoss++;
+            }
         },
         // 進撃時安全チェック
         isSafeSotie: function () {
             return !this.isWrecked;
         },
         // 母港帰還時
-        onBackPort: function () {
+        onBackPort: function (json) {
             this.wrecked = false; // ただし修理は必要
+            this.combined = json['api_data']['api_combined_flag'] ? json['api_data']['api_combined_flag'] : 0;
         },
         toDom: function () {
             var $ul = $('<ul />').addClass('counts');

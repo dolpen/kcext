@@ -18,7 +18,7 @@
         })
         .handle(/kcsapi\/api_get_member\/slot_item$/, function (json) {
             db['equipment'] = adaptors.equipment(json);
-            if(db['weapon_to_hash']){
+            if (db['weapon_to_hash']) {
                 db['equipment'].each(function (e) {
                     e.assignMaster(db['weapon_to_hash']);
                 });
@@ -48,7 +48,9 @@
             db['repair'] = adaptors.repair(json).each(function (e) {
                 e.assignMaster(g);
             });
-            caches.combined = json['api_data']['api_combined_flag'] ? json['api_data']['api_combined_flag'] : 0;
+            // update global object
+            caches.onBackPort(json);
+
             // update UI
             var $v = $('#port');
             $v.empty();
@@ -64,28 +66,26 @@
             $u.empty();
             $u.append($t);
         }).handle(/kcsapi\/api_req_(sortie|battle_midnight|practice|combined_battle)\/(sp_midnight|(midnight_|air)?battle(_water)?)$/, function (json) {
-            var b = adaptors.battle(json, db['fleet'],db['ship_to_hash']);
-            caches.currentBattle = b;
+            var b = adaptors.battle(json, db['fleet'], db['ship_to_hash']);
+            // update global object
+            caches.onBattle(b);
             var $v = $('#battle');
             $v.empty();
             $v.append(b.toDom());
         }).handle(/kcsapi\/api_req_(sortie|combined_battle)\/battleresult$/, function (json) {
-            if (!caches.currentBattle) return;
-            caches.od.destroyLst += caches.currentBattle.enemies.filter(function (e) {
-                return e.nowhp <= 0 && e.master != null;
-            }).filter(function (e) {
-                return e.master.typeId == 15; // 15 = 補給艦
-            }).length;
+            caches.onFinishBattle();
             var $v = $('#stats');
             $v.empty();
             $v.append(caches.toDom());
         }).handle(/kcsapi\/api_req_map\/(start|next)$/, function (json) {
-            var s = adaptors.sortie(json);
-            if (s.isBossCell()) {
-                caches.od.approachBoss++;
-            }
+            var s = adaptors.sotie(json);
+            caches.onSotie(s);
             var $v = $('#stats');
             $v.empty();
             $v.append(caches.toDom());
+            if (!caches.isSafeSotie()) {
+                $('#wreckedModal').modal('show');
+            }
         }).listen();
+    $('#wreckedModal').modal('show');
 })(document, window, jQuery);

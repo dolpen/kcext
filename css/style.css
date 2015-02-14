@@ -108,3 +108,17 @@ td.luck.max{background: #0f8}
 td.sub.max{background: #0f8}
 td.accuracy.max{background: #0f8}
 td.evasion.max{background: #0f8}
+
+/**
+ modal context
+*/
+.modal-danger {
+    border-radius: 6px;
+    background-color: #f2dede;
+}
+.modal-danger .modal-header,
+.modal-danger .modal-body,
+.modal-danger .modal-footer {
+    background-color: #f2dede;
+    color: #a94442;
+}
