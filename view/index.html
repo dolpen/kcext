@@ -20,12 +20,38 @@
         <div class="tab-pane" id="stats">ここに各種カウント</div>
     </div>
 </div>
-<div class="modal fade" id="wreckedModal" tabindex="-1" role="dialog" aria-labelledby="wreckedModalLabel" aria-hidden="true">
+<div class="modal fade" id="wreckedModal" tabindex="-1" role="dialog" aria-labelledby="wreckedModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content modal-danger">
+        <div class="modal-content alert-danger">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">閉じる</span></button>
-                <h4 class="modal-title" id="wreckedModalLabel">大破艦を進撃させました！</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">閉じる</span></button>
+                <h4 class="modal-title" id="wreckedModalLabel">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>味方艦が大破しました！
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>撤退を推奨します</p>
+
+                <p>進撃する場合は、ダメコン等の装備を確認してください</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="dangerModal" tabindex="-1" role="dialog" aria-labelledby="dangerModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content alert-danger">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">閉じる</span></button>
+                <h4 class="modal-title" id="dangerModalLabel">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>大破艦を進撃させました！</h4>
             </div>
             <div class="modal-body">
                 <p>覚悟してください</p>

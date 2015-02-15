@@ -112,10 +112,22 @@ models = {
         this.enemies = this._makeEnemyShips(raw); // player
         this.combinedFlag = raw['api_nowhps_combined'] != null;
         this.combined = this.combinedFlag ? this._makeCombinedShips(raw, fleet) : [];
-        this.wrecked = false;
-        this.wreckedStart = false;
+        this.startLifeLevel = 0;
+        this.endLifeLevel = 0;
         if (ship != null)this.assignMaster(ship);
         this.logs = [];
+        var self = this;
+        // 初期状態集計処理（大破艦発生判定）
+        this.friends.each(function (e) {
+            self.startLifeLevel = Math.max(self.startLifeLevel, e.getLifeLevel());
+        });
+        if (this.combinedFlag) {
+            this.combined.each(function (e) {
+                self.startLifeLevel = Math.max(self.startLifeLevel, e.getLifeLevel());
+            });
+        }
+
+
         // 航空攻撃の処理
         this._procAir(raw['api_kouku'], '航空');
         this._procAir(raw['api_kouku2'], '航空2');
@@ -156,16 +168,13 @@ models = {
         this._procTorp(raw['api_raigeki'], '雷撃');
         // 夜戦処理
         this._procShelling(raw['api_hougeki'], '夜戦', caches.combined != 0); // 連合艦隊なら夜戦は随伴
-        var self = this;
-        // ダメージ集計処理（大破艦発生判定）
+        // 最終ダメージ集計処理（大破艦発生判定）
         this.friends.each(function (e) {
-            if (e.isWrecked())self.wrecked = true;
-            if (e.isWreckedStart())self.wreckedStart = true;
+            self.endLifeLevel = Math.max(self.endLifeLevel, e.getLifeLevel());
         });
         if (this.combinedFlag) {
             this.combined.each(function (e) {
-                if (e.isWrecked())self.wrecked = true;
-                if (e.isWreckedStart())self.wreckedStart = true;
+                self.endLifeLevel = Math.max(self.endLifeLevel, e.getLifeLevel());
             });
         }
     }
@@ -533,10 +542,10 @@ models.Battle.prototype = {
         });
     },
     isWrecked: function () {
-        return this.wrecked;
+        return this.endLifeLevel >= 4; // 4(大破)
     },
-    isWreckedStart: function () {
-        return this.wreckedStart;
+    isNewWrecked: function () {
+        return  this.endLifeLevel >= 4 &&  this.startLifeLevel < 4;
     },
     toDom: function () {
         var $res = $('<div />').addClass('result');
@@ -560,11 +569,7 @@ models.Battle.prototype = {
             $etbl.append(e.toDom());
         });
         if (this.isWrecked()) {
-            if (this.isWreckedStart()) {
-                $res.append($('<p />').css('color', 'red').text('大破状態で戦闘に突入しました！！'));
-            } else {
-                $res.append($('<p />').css('color', 'red').text('大破艦が出ました！'));
-            }
+            $res.append($('<div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span><span class="sr-only">注意:</span> 味方艦が大破しています！</div>'));
             $res.append($('<hr />'));
         }
         $res.append($ftbl);

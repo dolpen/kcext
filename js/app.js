@@ -69,6 +69,9 @@
             var $v = $('#battle');
             $v.empty();
             $v.append(b.toDom());
+            if(b.isNewWrecked()){
+                $('#wreckedModal').modal('show');
+            }
         }).handle(/kcsapi\/api_req_(sortie|combined_battle)\/battleresult$/, function (json) {
             caches.onFinishBattle();
             var $v = $('#stats');
@@ -81,7 +84,7 @@
             $v.empty();
             $v.append(caches.toDom());
             if (!caches.isSafeSotie()) {
-                $('#wreckedModal').modal('show');
+                $('#dangerModal').modal('show');
             }
         }).listen();
 })(document, window, jQuery);
