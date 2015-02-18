@@ -28,6 +28,66 @@ var utils = {
         return ['健全', '軽微', '小破', '中破', '大破', '撃沈'][utils.lifeLevel(now, max)];
     },
     /**
+     * 指定インデックスの要素を取得
+     * @param arr 配列
+     * @param index インデックス
+     * @param defaultIndex デフォルト
+     * @returns {*}
+     */
+    getInRange: function (arr, index, defaultIndex) {
+        return arr[(!index || index < 0 || index >= arr.length) ? defaultIndex : index];
+    },
+    /**
+     *
+     * @returns {string}
+     */
+    combinedLabel: function () {
+        return utils.getInRange([
+            '通常艦隊',
+            '機動部隊',
+            '水上部隊',
+            '不明'
+        ], caches.combined, 4);
+    },
+    /**
+     *
+     * @param searchId api_search[1-2]
+     * @returns {string}
+     */
+    searchLabel: function (searchId) {
+        return utils.getInRange([
+            '索敵状態不明',
+            '発見！',
+            '発見！(索敵機未帰還機あり)',
+            '発見できず…(索敵機未帰還機あり)',
+            '発見できず…',
+            '発見！(索敵機なし)',
+            '索敵せず'
+        ], searchId, 0);
+    },
+    /**
+     *
+     * @param battleForm api_formation[0-1]
+     * @returns {string}
+     */
+    formLabel: function (battleForm) {
+        return utils.getInRange([
+            '陣形不明',
+            '単縦陣', '複縦陣', '輪形陣', '梯形陣', '単横陣',
+            '', '', '', '', '',
+            '第一警戒航行序列', '第二警戒航行序列', '第三警戒航行序列', '第四警戒航行序列'
+        ], battleForm, 0);
+    },
+
+    /**
+     *
+     * @param battleForm api_formation[2]
+     * @returns {string}
+     */
+    battleLabel: function (battleForm) {
+        return utils.getInRange(['戦闘形態不明', '同航戦', '反航戦', 'T字有利', 'T字不利'], battleForm, 0);
+    },
+    /**
      * @param now 現在値
      * @returns {number}(good,normal,lit,warn,critical)
      */

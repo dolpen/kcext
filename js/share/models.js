@@ -108,10 +108,20 @@ models = {
     // 戦闘そのもの
     Battle: function (raw, port, ship) {
         var fleet = port.fleets;
+        // 随伴艦隊の存在判定
+        this.combinedFlag = raw['api_nowhps_combined'] != null;
+        // 戦闘艦の情報(味方/敵/随伴艦)
         this.friends = this._makeFriendShips(raw, fleet); // player
         this.enemies = this._makeEnemyShips(raw); // player
-        this.combinedFlag = raw['api_nowhps_combined'] != null;
         this.combined = this.combinedFlag ? this._makeCombinedShips(raw, fleet) : [];
+        //索敵
+        this.friendSearch = raw['api_search'] ? raw['api_search'][0] : 0; // 自分の索敵
+        this.enemySearch = raw['api_search'] ? raw['api_search'][1] : 0; // 相手の索敵
+        // 陣形
+        this.friendForm = raw['api_formation'] ? raw['api_formation'][0] : 0; // 自分の陣形
+        this.enemyForm = raw['api_formation'] ? raw['api_formation'][1] : 0; // 相手の陣形
+        this.battleForm = raw['api_formation'] ? raw['api_formation'][2] : 0; // T字不利とか
+
         this.startLifeLevel = 0;
         this.endLifeLevel = 0;
         if (ship != null)this.assignMaster(ship);
@@ -541,30 +551,49 @@ models.Battle.prototype = {
             _self._damage(_self.enemies[i - 1], x, context);
         });
     },
+    getFriendSearchLabel: function () {
+        return utils.searchLabel(this.friendSearch);
+    },
+    getEnemySearchLabel: function () {
+        return utils.searchLabel(this.enemySearch);
+    },
+    getFriendFormationLabel: function () {
+        return utils.formLabel(this.friendForm);
+    },
+    getEnemyFormationLabel: function () {
+        return utils.formLabel(this.enemyForm);
+    },
+    getBattleFormationLabel: function () {
+        return utils.battleLabel(this.battleForm);
+    },
     isWrecked: function () {
         return this.endLifeLevel >= 4; // 4(大破)
     },
     isNewWrecked: function () {
-        return  this.endLifeLevel >= 4 &&  this.startLifeLevel < 4;
+        return  this.endLifeLevel >= 4 && this.startLifeLevel < 4;
     },
     toDom: function () {
         var $res = $('<div />').addClass('result');
         var $ul = $('<ul />').addClass('battle');
+        $ul.append($('<li />').addClass('log').text('交戦 : '+this.getBattleFormationLabel()));
         this.logs.each(function (e) {
             $ul.append($('<li />').addClass('log').text(e));
         });
         var $ftbl = $('<table />').addClass('fleet');
+        $ftbl.append($('<tr />').append($('<td />').attr('colspan', '3').text('陣形:' + this.getFriendFormationLabel() + ' 索敵:' + this.getFriendSearchLabel())));
         this.friends.each(function (e) {
             $ftbl.append(e.toDom());
         });
 
         if (this.combinedFlag) {
             var $cmbl = $('<table />').addClass('fleet');
+            $cmbl.append($('<tr />').append($('<td />').attr('colspan', '3').text(utils.combinedLabel())));
             this.combined.each(function (e) {
                 $cmbl.append(e.toDom());
             });
         }
         var $etbl = $('<table />').addClass('fleet');
+        $etbl.append($('<tr />').append($('<td />').attr('colspan', '3').text('陣形:' + this.getEnemyFormationLabel() + ' 索敵:' + this.getEnemySearchLabel())));
         this.enemies.each(function (e) {
             $etbl.append(e.toDom());
         });
@@ -572,13 +601,17 @@ models.Battle.prototype = {
             $res.append($('<div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span><span class="sr-only">注意:</span> 味方艦が大破しています！</div>'));
             $res.append($('<hr />'));
         }
-        $res.append($ftbl);
-        $res.append($('<hr />'));
+        var $friend = $('<div />').addClass('col-6 col-sm-6 col-lg-6');
+        $friend.append($('<h4 />').text('自艦隊'));
+        $friend.append($ftbl);
         if (this.combinedFlag) {
-            $res.append($cmbl);
-            $res.append($('<hr />'));
+            $friend.append($('<hr />'));
+            $friend.append($cmbl);
         }
-        $res.append($etbl);
+        var $enemy = $('<div />').addClass('col-6 col-sm-6 col-lg-6');
+        $enemy.append($('<h4 />').text('敵艦隊'));
+        $enemy.append($etbl);
+        $res.append($('<div />').addClass('row').append($friend).append($enemy));
         $res.append($('<hr />'));
         $res.append($ul);
         return $res;
