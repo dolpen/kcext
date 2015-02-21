@@ -107,7 +107,7 @@ models = {
     },
     // 戦闘そのもの
     Battle: function (raw, port, ship) {
-        var fleet = port.fleets;
+        var fleet = port ? port.fleets : null;
         // 随伴艦隊の存在判定
         this.combinedFlag = raw['api_nowhps_combined'] != null;
         // 戦闘艦の情報(味方/敵/随伴艦)
@@ -224,10 +224,12 @@ models.Girl.prototype = {
         });
         var self = this;
         this.equipments.each(function (e) {
-            self.firePower.addItemScore(e.master.firePower);
-            self.torpedo.addItemScore(e.master.torpedo);
-            self.armor.addItemScore(e.master.armor);
-            self.antiAir.addItemScore(e.master.antiAir);
+            if (e.master) {
+                self.firePower.addItemScore(e.master.firePower);
+                self.torpedo.addItemScore(e.master.torpedo);
+                self.armor.addItemScore(e.master.armor);
+                self.antiAir.addItemScore(e.master.antiAir);
+            }
         });
     },
     getName: function () {
@@ -575,7 +577,7 @@ models.Battle.prototype = {
     toDom: function () {
         var $res = $('<div />').addClass('result');
         var $ul = $('<ul />').addClass('battle');
-        $ul.append($('<li />').addClass('log').text('交戦 : '+this.getBattleFormationLabel()));
+        $ul.append($('<li />').addClass('log').text('交戦 : ' + this.getBattleFormationLabel()));
         this.logs.each(function (e) {
             $ul.append($('<li />').addClass('log').text(e));
         });
