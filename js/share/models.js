@@ -162,20 +162,21 @@ models = {
             case 0: // 通常艦隊
                 this._procShelling(raw['api_hougeki1'], '砲撃', false); // 主力
                 this._procShelling(raw['api_hougeki2'], '砲撃2', false); // 主力
+                this._procTorp(raw['api_raigeki'], '雷撃', false);
                 break;
             case 1: // 機動部隊
                 this._procShelling(raw['api_hougeki1'], '砲撃', true); // 随伴
                 this._procShelling(raw['api_hougeki2'], '砲撃2', false); // 主力
                 this._procShelling(raw['api_hougeki3'], '砲撃3', false); // 主力
+                this._procTorp(raw['api_raigeki'], '雷撃', true); // 随伴
                 break;
             case 2: // 水上部隊
                 this._procShelling(raw['api_hougeki1'], '砲撃', false); // 主力
                 this._procShelling(raw['api_hougeki2'], '砲撃2', false); // 主力
                 this._procShelling(raw['api_hougeki3'], '砲撃3', true); // 随伴
+                this._procTorp(raw['api_raigeki'], '雷撃', true); // 随伴
                 break;
         }
-        // 閉幕
-        this._procTorp(raw['api_raigeki'], '雷撃');
         // 夜戦処理
         this._procShelling(raw['api_hougeki'], '夜戦', caches.combined != 0); // 連合艦隊なら夜戦は随伴
         // 最終ダメージ集計処理（大破艦発生判定）
