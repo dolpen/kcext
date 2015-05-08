@@ -78,12 +78,12 @@
             $v.empty();
             $v.append(caches.toDom());
         }).handle(/kcsapi\/api_req_map\/(start|next)$/, function (json) {
-            var s = adaptors.sotie(json);
-            caches.onSotie(s);
+            var s = adaptors.sortie(json);
+            caches.onSortie(s);
             var $v = $('#stats');
             $v.empty();
             $v.append(caches.toDom());
-            if (!caches.isSafeSotie()) {
+            if (!caches.isSafeSortie()) {
                 $('#dangerModal').modal('show');
             }
         }).listen();

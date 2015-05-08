@@ -92,7 +92,7 @@ models = {
         this.girlId = raw['api_ship_id'];
         this.girl = null;
     },
-    Sotie: function (raw) {
+    Sortie: function (raw) {
         this.cellId = raw['api_no'];
         this.bossCellId = raw['api_bosscell_no'] == null ? -1 : raw['api_bosscell_no'];
     },
@@ -398,7 +398,7 @@ models.Repair.prototype = {
         );
     }
 };
-models.Sotie.prototype = {
+models.Sortie.prototype = {
     isBossCell: function () {
         return this.cellId == this.bossCellId;
     }
@@ -677,10 +677,10 @@ var adaptors = {
     },
     /**
      * @param req/start
-     * @return models.Sotie
+     * @return models.Sortie
      */
-    sotie: function (json) {
-        return new models.Sotie(json['api_data']);
+    sortie: function (json) {
+        return new models.Sortie(json['api_data']);
     },
     /**
      * @param req/battle
@@ -738,13 +738,13 @@ var caches = (function () {
             }).length;
         },
         // 進撃時安全チェック
-        onSotie: function (sotie) {
-            if (sotie.isBossCell()) {
+        onSortie: function (sortie) {
+            if (sortie.isBossCell()) {
                 this.od.approachBoss++;
             }
         },
         // 進撃時安全チェック
-        isSafeSotie: function () {
+        isSafeSortie: function () {
             return !this.isWrecked;
         },
         // 母港帰還時
