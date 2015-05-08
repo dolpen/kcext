@@ -104,6 +104,7 @@ models = {
         this.idName = idName;
         this.shipId = shipId;
         this.master = null;
+        this.girl = null;
     },
     // 戦闘そのもの
     Battle: function (raw, port, ship) {
@@ -263,6 +264,23 @@ models.Girl.prototype = {
     isWrecked: function () { // 大破ならtrue
         return utils.wrecked(this.nowhp, this.maxhp);
     },
+    hasEquipment: function (weaponId) {
+        return this.equipments && this.equipments.any(function (e) {
+            return e.weaponId = weaponId;
+        });
+    },
+    useEquipment: function (weaponId) {
+        if (!this.equipments)return false;
+        var equipment = this.equipments.first(function (e) {
+            return e.weaponId = weaponId;
+        });
+        if (!equipment.isPresent())return false;
+        var equipmentId = equipment.orElse(null).equipmentId;
+        this.equipments = this.equipments.filter(function (e) {
+            return e.equipmentId != equipmentId;
+        });
+        return true;
+    },
     toString: function () {
         return 'Lv' + this.level + ' '
             + this.getName()
@@ -407,6 +425,9 @@ models.Player.prototype = {
     assignMaster: function (ship) {
         this.master = ship[this.shipId];
     },
+    assignGirl: function (girl) {
+        this.girl = girl;
+    },
     getName: function () {
         return utils.displayName(this.master);
     },
@@ -427,6 +448,22 @@ models.Player.prototype = {
     },
     damage: function (val) {
         this.nowhp = Math.max(this.nowhp - val, 0);
+    },
+    damageControl: function () {
+        if (this.girl == null || this.girl.equipments == null)
+            return -1;
+        if (this.nowhp > 0)
+            return -1;
+        if (this.girl.hasEquipment(consts.repairNormalWeaponId)) {
+            this.girl.useEquipment(consts.repairNormalWeaponId);
+            this.nowhp = Math.floor(this.maxhp * 0.2);
+            return consts.repairNormalWeaponId;
+        } else if (this.girl.hasEquipment(consts.repairSpecialWeaponId)) {
+            this.girl.useEquipment(consts.repairSpecialWeaponId);
+            this.nowhp = this.maxhp;
+            return consts.repairSpecialWeaponId;
+        }
+        return -1;
     },
     toDom: function () {
         var life = this.getLifeLevel();
@@ -454,13 +491,14 @@ models.Battle.prototype = {
         [1, 2, 3, 4, 5, 6].each(function (i) {
             var x = raw['api_maxhps'][i];
             if (x <= 0)return;
-            ret.push(
+            var player =
                 new models.Player(
                     deck ? deck.girls[i - 1].shipId : -1,
                         '味方' + i + '番艦',
                     raw['api_nowhps'][i],
-                    x)
-            );
+                    x);
+            if (deck)player.assignGirl(deck.girls[i - 1]);
+            ret.push(player);
         });
         return ret;
     },
@@ -500,6 +538,16 @@ models.Battle.prototype = {
         target.damage(val);
         //console.log(target.getName() + '(' + target.idName + ')に' + val + 'ダメージ(' + context + ')');
         this.logs.push(target.getName() + '(' + target.idName + ')に' + val + 'ダメージ(' + context + ')');
+        switch (target.damageControl()) {
+            case  consts.repairNormalWeaponId:
+                this.logs.push(target.getName() + '(' + target.idName + ')のダメコン発動！(HPが' + target.nowhp + '回復)');
+                break;
+            case  consts.repairSpecialWeaponId:
+                this.logs.push(target.getName() + '(' + target.idName + ')のダメコン発動！(HPが全回復)');
+                break;
+            default :
+                break;
+        }
     },
     _procAir: function (data, context) {
         if (!data)return;
@@ -734,7 +782,7 @@ var caches = (function () {
             this.od.destroyLst += this.currentBattle.enemies.filter(function (e) {
                 return e.nowhp <= 0 && e.master != null;
             }).filter(function (e) {
-                return e.master.typeId == 15; // 15 = 補給艦
+                return e.master.typeId == consts.supplyShipTypeId;
             }).length;
         },
         // 進撃時安全チェック
