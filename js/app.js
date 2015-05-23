@@ -47,7 +47,7 @@
             db['repair'] = adaptors.repair(json);
             db['repair'].assignMaster(g);
             // update global object
-            caches.onBackPort(json);
+            kccaches.onBackPort(json);
 
             // update UI
             var $v = $('#port');
@@ -65,7 +65,7 @@
         }).handle(/kcsapi\/api_req_(sortie|battle_midnight|practice|combined_battle)\/(sp_midnight|(midnight_|air)?battle(_water)?)$/, function (json) {
             var b = adaptors.battle(json, db['port'], db['ship_to_hash']);
             // update global object
-            caches.onBattle(b);
+            kccaches.onBattle(b);
             var $v = $('#battle');
             $v.empty();
             $v.append(b.toDom());
@@ -73,17 +73,17 @@
                 $('#wreckedModal').modal('show');
             }
         }).handle(/kcsapi\/api_req_(sortie|combined_battle)\/battleresult$/, function (json) {
-            caches.onFinishBattle();
+            kccaches.onFinishBattle();
             var $v = $('#stats');
             $v.empty();
-            $v.append(caches.toDom());
+            $v.append(kccaches.toDom());
         }).handle(/kcsapi\/api_req_map\/(start|next)$/, function (json) {
             var s = adaptors.sortie(json);
-            caches.onSortie(s);
+            kccaches.onSortie(s);
             var $v = $('#stats');
             $v.empty();
-            $v.append(caches.toDom());
-            if (!caches.isSafeSortie()) {
+            $v.append(kccaches.toDom());
+            if (!kccaches.isSafeSortie()) {
                 $('#dangerModal').modal('show');
             }
         }).listen();

@@ -47,7 +47,7 @@ var utils = {
             '機動部隊',
             '水上部隊',
             '不明'
-        ], caches.combined, 4);
+        ], kccaches.combined, 4);
     },
     /**
      *
